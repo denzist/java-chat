@@ -5,7 +5,6 @@ import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketTimeoutException;
-import java.util.ArrayList;
 import java.util.Iterator;
 
 import Controller.ServerController;
@@ -53,32 +52,38 @@ public class Server implements Runnable{
 					ServerController.endQuery = false;
 				}catch(IOException e){
 					e.printStackTrace();
-				}finally{					
-					System.out.println("Close sockets");
-					ServerController.println("Close sockets");
+				}finally{			
+					if(ServerController.isConnected){
+						System.out.println("Close sockets");
+						ServerController.println("Close sockets");
 					
-					Iterator<ServerOne> iterClients = clients.servers.iterator();					
-					while(iterClients.hasNext()){
+						Iterator<ServerOne> iterClients = clients.servers.iterator();					
+						while(iterClients.hasNext()){
 						
-						ServerOne serverOne = iterClients.next();
-						serverOne.interrupt();
-						try {
+							ServerOne serverOne = iterClients.next();
+							serverOne.interrupt();
+							try {
 							serverOne.join();
-						} catch (InterruptedException e) {
-							e.printStackTrace();
+							} catch (InterruptedException e) {
+								e.printStackTrace();
+							}
 						}
-					}
 					
-					clients.servers.clear();
-					if(s != null)
-						try {
-							s.close();
-						} catch (IOException e) {
-							e.printStackTrace();
-						}
-					System.out.println("Closed: " + s);
-					ServerController.println("Closed: " + s);
-					ServerController.isConnected = false;
+						clients.servers.clear();
+						if(s != null)
+							try {
+								s.close();
+								System.out.println("Closed: " + s);
+								ServerController.println("Closed: " + s);
+								s = null;
+							} catch (IOException e) {
+								e.printStackTrace();
+							}
+						ServerController.isConnected = false;
+					}else{
+						ServerController.println("Address already in use");
+						System.out.println("Address already in use");
+					}
 				}
 			}
 		}
