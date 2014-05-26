@@ -4,6 +4,7 @@ import message.Message;
 import message.Ping;
 
 import java.io.*;
+import java.net.InetAddress;
 import java.net.Socket;
 import java.net.SocketTimeoutException;
 
@@ -27,7 +28,7 @@ class ServerOne extends Thread{
 		try{
 			socket.setSoTimeout(1000);
 			username = in.readLine();
-			Server.clients.distribution("Joined:" + username);
+			Server.clients.distribution("Joined:" + username +  " "+ InetAddress.getByName(ServerController.serverIP).getHostName() +" " + socket);
 			ServerController.println("Joined:" + username);
 			System.out.println("Joined:" + username);
 			while(!Thread.currentThread().isInterrupted()){
