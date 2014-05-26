@@ -1,8 +1,6 @@
 package swing;
 
 
-import Controller.ClientController;
-
 import java.awt.Dimension;
 import java.awt.EventQueue;
 
@@ -18,18 +16,20 @@ import java.awt.event.KeyListener;
 
 import javax.swing.JLabel;
 
+import Controller.ClientController;
 import client.Client;
 
 
 public class ClientGUI {
 	
-	public JFrame frame;
-	public JTextField messageField;
+	private ClientController clientController;
+	private JFrame frame;
+	private JTextField messageField;
 	public static JTextField userNameField = null;
 	public static JTextField serverIPField = null;
-	public static  TextArea chat;
-	public JButton btnConnect;
-	public JButton btnDisconnect;
+	private TextArea chat;
+	private JButton btnConnect;
+	private JButton btnDisconnect;
 
 	
 	public static void main(String[] args) {
@@ -46,12 +46,11 @@ public class ClientGUI {
 	}
 	
 	public ClientGUI(){
-		initWindow();
-		ClientController control = new ClientController();
+		init();
 	}
 
 	
-	private void initWindow() {
+	private void init() {
 		frame = new JFrame();
 		frame.setResizable(false);
 		frame.getContentPane().setLayout(null);
@@ -114,6 +113,17 @@ public class ClientGUI {
 		
 		frame.pack();
         frame.setVisible(true);   
+        try{
+			Client client = new Client(chat);
+			clientController = new ClientController(client);
+			
+			Thread clientThread = new Thread(client);
+			clientThread.start();
+			
+		}catch(NullPointerException e){
+			e.printStackTrace();
+			System.exit(1);
+		}
 	}
 	
 	public class messageEvent implements KeyListener {
@@ -121,7 +131,7 @@ public class ClientGUI {
 		@Override
 		public void keyPressed(KeyEvent e) {
 			if (e.getKeyCode() == KeyEvent.VK_ENTER){
-				ClientController.sendMsg(messageField.getText());
+				clientController.sendMsg(messageField.getText());
 				messageField.setText("");
 			}
 		}
@@ -143,7 +153,7 @@ public class ClientGUI {
 
 		public void actionPerformed(ActionEvent e) {
 			if(e.getActionCommand() == "Send action"){
-				ClientController.sendMsg(messageField.getText());
+				clientController.sendMsg(messageField.getText());
 				messageField.setText("");
 			}
 		}
@@ -154,11 +164,7 @@ public class ClientGUI {
 		@Override
 		public void actionPerformed(ActionEvent e) {
 			if(e.getActionCommand() == "Disconnect action")
-				if(ClientController.isConnected){
-					ClientController.disconnectQuery = true;
-				}else{
-					ClientController.flush("You are not connected to any server");
-				}
+				clientController.sendDisconnectQuery();
 		}
 		
 	}
@@ -168,8 +174,7 @@ public class ClientGUI {
 		@Override
 		public void actionPerformed(ActionEvent e) {
 			if(e.getActionCommand() == "Connect action")
-				if(!ClientController.isConnected)
-					ClientController.connectQuery = true;
+				clientController.sendConnectQuery();
 		}
 		
 	}

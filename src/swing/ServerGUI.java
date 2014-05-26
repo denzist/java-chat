@@ -13,12 +13,16 @@ import java.awt.event.ActionListener;
 import java.awt.event.ActionEvent;
 
 import javax.swing.JLabel;
+
+import server.Server;
 import Controller.ServerController;
 
 
 
 public class ServerGUI {
 	
+	
+	private ServerController serverController;
 	public JFrame frame;
 	public static JTextField serverIPField;
 	public static TextArea chat;
@@ -37,15 +41,16 @@ public class ServerGUI {
 				}
 			}
 		});
+
 	}
 	
 	public ServerGUI(){
-		initWindow();
-		ServerController control = new ServerController();
+		init();
 	}
+	
 
 	
-	private void initWindow() {
+	private void init() {
 		frame = new JFrame();
 		frame.setResizable(false);
 		frame.getContentPane().setLayout(null);
@@ -81,6 +86,17 @@ public class ServerGUI {
 		
 		frame.pack();
         frame.setVisible(true);   
+        try{
+			Server server = new Server(chat);
+			serverController = new ServerController(server);
+			
+			Thread serverThread = new Thread(server);
+			serverThread.start();
+			
+		}catch(NullPointerException e){
+			e.printStackTrace();
+			System.exit(1);
+		}
 	}
 
 	public class DisconnectEvent implements ActionListener{
@@ -88,10 +104,7 @@ public class ServerGUI {
 		@Override
 		public void actionPerformed(ActionEvent e) {
 			if(e.getActionCommand() == "Close server action"){	
-				if(ServerController.isConnected)
-					ServerController.endQuery = true;
-				else
-					chat.setText("The server isn't started");
+				serverController.sendEndQuery();
 			}
 			
 		}
@@ -103,9 +116,7 @@ public class ServerGUI {
 		@Override
 		public void actionPerformed(ActionEvent e) {
 			if(e.getActionCommand() == "Start action"){
-				if(!ServerController.isConnected){
-					ServerController.startQuery = true;
-				}
+				serverController.sendStartQuery();
 			}
 		}
 	}

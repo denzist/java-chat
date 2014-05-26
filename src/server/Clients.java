@@ -2,15 +2,27 @@ package server;
 
 import java.util.*;
 
-import message.Message;
 
 class Clients{
 	
-	public ArrayList<ServerOne> servers = new ArrayList<>();
+	public ArrayList<ServerOne> servers = new ArrayList<ServerOne>();
+	public ArrayList<String> usernames = new ArrayList<String>();
 	
-	public void addUser(ServerOne server){
-		servers.add(server);
-		
+	public synchronized void addServer(ServerOne server){
+		servers.add(server);		
+	}
+	
+	public synchronized void addUser(String username){
+		usernames.add(username);
+	}
+	
+	public synchronized void clear(){
+		servers.clear();
+		usernames.clear();
+	}
+	
+	public synchronized boolean hasUser(String username){
+		return usernames.contains(username);
 	}
 	
 	public void distribution(String msg){

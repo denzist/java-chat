@@ -4,7 +4,6 @@ package server;
 import java.io.*;
 import java.util.*;
 
-import message.Message;
 
 class LastMessage{
 	private LinkedList<String> list = new LinkedList<>();
