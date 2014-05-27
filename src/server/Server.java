@@ -8,6 +8,8 @@ import java.net.Socket;
 import java.net.SocketTimeoutException;
 import java.util.Iterator;
 
+import javax.swing.JTextField;
+
 import swing.ServerGUI;
 
  
@@ -22,13 +24,18 @@ public class Server implements Runnable{
 	private volatile boolean endQuery = false;
 	
 	private TextArea chat;
+	private JTextField serverIPField;
 	
 	public volatile String serverIP;
 	public final static int PORT = 1234;
 	
-	public Server(TextArea c) throws NullPointerException{
+	public Server(TextArea c, JTextField s) throws NullPointerException{
 		if(c != null)
 			chat = c;
+		else
+			throw new NullPointerException();
+		if(s != null)
+			this.serverIPField = s;
 		else
 			throw new NullPointerException();
 	}
@@ -61,7 +68,7 @@ public class Server implements Runnable{
 	}
 	
 	public void getServerInfo() {
-		serverIP = ServerGUI.serverIPField.getText();
+		serverIP = serverIPField.getText();
 	}
 	
 	public void run(){

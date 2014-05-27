@@ -87,7 +87,7 @@ public class ServerGUI {
 		frame.pack();
         frame.setVisible(true);   
         try{
-			Server server = new Server(chat);
+			Server server = new Server(chat, serverIPField);
 			serverController = new ServerController(server);
 			
 			Thread serverThread = new Thread(server);

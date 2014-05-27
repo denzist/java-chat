@@ -25,8 +25,8 @@ public class ClientGUI {
 	private ClientController clientController;
 	private JFrame frame;
 	private JTextField messageField;
-	public static JTextField userNameField = null;
-	public static JTextField serverIPField = null;
+	private JTextField userNameField;
+	private JTextField serverIPField;
 	private TextArea chat;
 	private JButton btnConnect;
 	private JButton btnDisconnect;
@@ -114,7 +114,7 @@ public class ClientGUI {
 		frame.pack();
         frame.setVisible(true);   
         try{
-			Client client = new Client(chat);
+			Client client = new Client(chat, userNameField, serverIPField);
 			clientController = new ClientController(client);
 			
 			Thread clientThread = new Thread(client);

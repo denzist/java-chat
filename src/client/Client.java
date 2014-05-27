@@ -9,14 +9,17 @@ import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
 import java.util.Date;
 
+import javax.swing.JTextField;
+
 import message.Message;
 import server.Server;
-import swing.ClientGUI;
 
  
 public class Client implements Runnable{
 	
 	private TextArea chat;
+	private JTextField userNameField;
+	private JTextField serverIPField;
 	
 	private volatile boolean isConnected = false;
 	private volatile boolean connectQuery = false;
@@ -33,9 +36,17 @@ public class Client implements Runnable{
 	private BufferedReader in;
 	private PrintWriter out;
 	
-	public Client(TextArea c) throws NullPointerException{
+	public Client(TextArea c, JTextField u, JTextField s) throws NullPointerException{
 		if(c != null)
 			this.chat = c;
+		else
+			throw new NullPointerException();
+		if(u != null)
+			this.userNameField = u;
+		else
+			throw new NullPointerException();
+		if(s != null)
+			this.serverIPField = s;
 		else
 			throw new NullPointerException();
 	}
@@ -83,8 +94,8 @@ public class Client implements Runnable{
 	}
 
 	public synchronized void getClientInfo() {
-		this.serverIP = ClientGUI.serverIPField.getText();
-		this.username = ClientGUI.userNameField.getText();
+		this.serverIP = serverIPField.getText();
+		this.username = userNameField.getText();
 	}
 	
 	public class ReadMessage implements Runnable{
