@@ -28,23 +28,22 @@ class ServerOne extends Thread{
 			if(server.clients.hasUser(username)){
 				out.println("Chat has already user with name " + username);
 				System.out.println("Socket closed: " + socket);
-				server.println("Socket closed: " + socket);
+				server.addMsgToMsgsQueue("Socket closed: " + socket);
 				socket.close();
 				throw new IOException();
 			}
 			server.clients.addUser(username);
 			server.clients.distribution("Joined:" + username +  " " + socket);
-			server.println("Joined:" + username);
+			server.addMsgToMsgsQueue("Joined:" + username);
 			System.out.println("Joined:" + username);
 			while(true){
 				String s = in.readLine();
 				if(!s.equals("")){
-					server.println(s);
+					server.addMsgToMsgsQueue(s);
 					server.lastMessage.add(s);
 					server.clients.distribution(s);
 				}else{
-					out.println("");
-					out.flush();
+					sendMsg("");
 				}
 				Thread.currentThread().sleep(100);
 			}
@@ -59,10 +58,11 @@ class ServerOne extends Thread{
 			if(!socket.isClosed()){
 				try {
 					server.clients.distribution("Leave: " + username);
-					server.println("Leave: " + username);
+					server.addMsgToMsgsQueue("Leave: " + username);
+					server.addMsgToMsgsQueue("Socket closed: " + socket);
 					System.out.println("Socket closed: " + socket);
-					server.println("Socket closed: " + socket);
 					socket.close();
+					server.clients.remove(username);
 				} catch (IOException e) {
 					e.printStackTrace();
 				}
@@ -74,6 +74,7 @@ class ServerOne extends Thread{
 	
 	public void sendMsg(String message){
 		out.println(message);
+		out.flush();
 	}
 	
 	public Socket getSocket(){

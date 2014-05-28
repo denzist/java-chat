@@ -11,6 +11,7 @@ import javax.swing.JTextField;
 import java.awt.TextArea;
 import java.awt.event.ActionListener;
 import java.awt.event.ActionEvent;
+import java.io.IOException;
 
 import javax.swing.JLabel;
 
@@ -23,13 +24,29 @@ public class ServerGUI {
 	
 	
 	private ServerController serverController;
+	private Server server;
 	public JFrame frame;
-	public static JTextField serverIPField;
-	public static TextArea chat;
+	private static JTextField serverIPField;
+	private static TextArea chat;
 	public JButton btnConnect;
 	public JButton btnDisconnect;
 
+	public String getServerInfo(){
+		return serverIPField.getText();
+	}
 	
+	public void flush(String s){
+		chat.setText(s);
+	}
+	
+	public void showMsg(){
+		try {
+			chat.append(server.readMsgQueue() + "\n");
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+
 	public static void main(String[] args) {
 		EventQueue.invokeLater(new Runnable() {
 			public void run() {
@@ -47,8 +64,6 @@ public class ServerGUI {
 	public ServerGUI(){
 		init();
 	}
-	
-
 	
 	private void init() {
 		frame = new JFrame();
@@ -87,15 +102,18 @@ public class ServerGUI {
 		frame.pack();
         frame.setVisible(true);   
         try{
-			Server server = new Server(chat, serverIPField);
-			serverController = new ServerController(server);
+			server = new Server();
+			server.initMsgsQueue();
+			serverController = new ServerController(server, this);
 			
 			Thread serverThread = new Thread(server);
 			serverThread.start();
 			
-		}catch(NullPointerException e){
+			Thread serverControlThread = new Thread(serverController);
+			serverControlThread.start();
+			
+		} catch (IOException e) {
 			e.printStackTrace();
-			System.exit(1);
 		}
 	}
 

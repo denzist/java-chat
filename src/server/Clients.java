@@ -25,12 +25,24 @@ class Clients{
 		return usernames.contains(username);
 	}
 	
-	public void distribution(String msg){
+	public synchronized void distribution(String msg){
 		Iterator<ServerOne> iter = servers.iterator();
 		while(iter.hasNext()){
 			ServerOne elem = iter.next();
 			elem.sendMsg(msg);
-
+		}
+	}
+	
+	public synchronized void remove(String username){
+		int idx = usernames.indexOf(username);
+		usernames.remove(idx);
+		Iterator<ServerOne> iter = servers.iterator();
+		while(iter.hasNext()){
+			ServerOne elem = iter.next();
+			if(elem.username.equals(username)){
+				servers.remove(iter);
+				break;
+			}
 		}
 	}
 }

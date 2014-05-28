@@ -1,6 +1,5 @@
 package server;
 
-import java.awt.TextArea;
 import java.io.*;
 import java.net.InetAddress;
 import java.net.ServerSocket;
@@ -8,9 +7,7 @@ import java.net.Socket;
 import java.net.SocketTimeoutException;
 import java.util.Iterator;
 
-import javax.swing.JTextField;
 
-import swing.ServerGUI;
 
  
 public class Server implements Runnable{
@@ -23,59 +20,59 @@ public class Server implements Runnable{
 	private volatile boolean startQuery = false;
 	private volatile boolean endQuery = false;
 	
-	private TextArea chat;
-	private JTextField serverIPField;
+	private volatile boolean isReadyMsgsQueue = false;
+	private PrintWriter outMsgsQueue;
+	private BufferedReader inMsgsQueue;
 	
 	public volatile String serverIP;
 	public final static int PORT = 1234;
 	
-	public Server(TextArea c, JTextField s) throws NullPointerException{
-		if(c != null)
-			chat = c;
-		else
-			throw new NullPointerException();
-		if(s != null)
-			this.serverIPField = s;
-		else
-			throw new NullPointerException();
-	}
-	
-	
-	
-	public void setOn(){
+	public boolean setOn(){
 		if(!this.isConnected){
 			this.startQuery = true;
+			return true;
 		}
+		return false;
 	}
 	
-	public void setOff(){
-		if(this.isConnected)
+	public boolean isReady(){
+		return isReadyMsgsQueue;
+	}
+	
+	public boolean setOff(){
+		if(this.isConnected){
 			this.endQuery = true;
-		else
-			this.flush("No server started");
+			return true;
+		}
+		return false;
 	}
 	
-	public void flush(){
-		this.chat.setText("");
+	public void setServerInfo(String serverIP) {
+		this.serverIP = serverIP; 
 	}
 	
-	public void flush(String s){
-		this.chat.setText(s);
+	public void initMsgsQueue() throws IOException{
+		PipedInputStream pinMsgs = new PipedInputStream();
+		PipedOutputStream poutMsgs = new PipedOutputStream(pinMsgs);
+		this.outMsgsQueue = new PrintWriter(new BufferedWriter(new OutputStreamWriter(poutMsgs)), true);
+		this.inMsgsQueue = new BufferedReader(new InputStreamReader(pinMsgs));
+		this.isReadyMsgsQueue = true;
 	}
 	
-	public void println(String s){
-		this.chat.append(s + "\n");
+	public synchronized void addMsgToMsgsQueue(String msg){
+		this.outMsgsQueue.println(msg);
+		this.outMsgsQueue.flush();
 	}
 	
-	public void getServerInfo() {
-		serverIP = serverIPField.getText();
+	public String readMsgQueue() throws IOException{
+		String s = this.inMsgsQueue.readLine();
+		return s;
 	}
+
 	
 	public void run(){
 		while(!Thread.currentThread().isInterrupted()){
 			if(this.startQuery){
-				this.flush();
-				this.getServerInfo();
 				this.startQuery = false;
 				try{
 					s = new ServerSocket(PORT, 0, InetAddress.getByName(serverIP));
@@ -83,7 +80,7 @@ public class Server implements Runnable{
 					clients = new Clients();
 					lastMessage = new LastMessage();
 					
-					this.println("Started: " + s);
+					this.addMsgToMsgsQueue("Started: " + s);
 					
 					this.isConnected = true;
 					while(!this.endQuery){
@@ -95,11 +92,11 @@ public class Server implements Runnable{
 						}
 						try{
 							System.out.println("Connected: " + socket);
-							this.println("Connected: " + socket);
+							this.addMsgToMsgsQueue("Connected: " + socket);
 							clients.addServer(new ServerOne(this, socket));
 						}catch(IOException e){
 							System.out.println("Closing: " + socket);
-							this.println("Closing: " + socket);
+							this.addMsgToMsgsQueue("Closing: " + socket);
 							socket.close();
 						}
 					}
@@ -109,7 +106,7 @@ public class Server implements Runnable{
 				}finally{			
 					if(this.isConnected){
 						System.out.println("Close sockets");
-						this.println("Close sockets");
+						this.addMsgToMsgsQueue("Close sockets");
 					
 						Iterator<ServerOne> iterClients = clients.servers.iterator();					
 						while(iterClients.hasNext()){
@@ -117,26 +114,31 @@ public class Server implements Runnable{
 							ServerOne serverOne = iterClients.next();
 							serverOne.interrupt();
 							try {
-							serverOne.join();
+								serverOne.join();
 							} catch (InterruptedException e) {
 								e.printStackTrace();
 							}
 						}
-					
+						System.out.println("asds");
 						clients.clear();
+						
 						if(s != null)
 							try {
 								s.close();
 								System.out.println("Closed: " + s);
-								this.println("Closed: " + s);
+								this.addMsgToMsgsQueue("Closed: " + s);
 								s = null;
 							} catch (IOException e) {
 								e.printStackTrace();
 							}
 						this.isConnected = false;
 					}else{
-						this.println("Address already in use");
-						System.out.println("Address already in use");
+						if(isReadyMsgsQueue){
+							this.addMsgToMsgsQueue("Address already in use");
+							System.out.println("Address already in use");
+						}else{
+							System.err.println("Error in initMsgsQueue");
+						}
 					}
 				}
 			}

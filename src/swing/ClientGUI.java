@@ -13,6 +13,7 @@ import java.awt.event.ActionListener;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
+import java.io.IOException;
 
 import javax.swing.JLabel;
 
@@ -23,6 +24,9 @@ import client.Client;
 public class ClientGUI {
 	
 	private ClientController clientController;
+	private Client client;
+	
+
 	private JFrame frame;
 	private JTextField messageField;
 	private JTextField userNameField;
@@ -30,6 +34,8 @@ public class ClientGUI {
 	private TextArea chat;
 	private JButton btnConnect;
 	private JButton btnDisconnect;
+	
+
 
 	
 	public static void main(String[] args) {
@@ -45,10 +51,29 @@ public class ClientGUI {
 		});
 	}
 	
+	public void showMsg(){
+		try {
+			chat.append(client.readMsgQueue() + "\n");
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+	
 	public ClientGUI(){
 		init();
 	}
+	
+	public void flush(String s){
+		chat.setText(s);
+	}
 
+	public String getClientUserName(){
+		return userNameField.getText();
+	}
+	
+	public String getClientServerIP(){
+		return serverIPField.getText();
+	}
 	
 	private void init() {
 		frame = new JFrame();
@@ -114,15 +139,18 @@ public class ClientGUI {
 		frame.pack();
         frame.setVisible(true);   
         try{
-			Client client = new Client(chat, userNameField, serverIPField);
-			clientController = new ClientController(client);
+        	client = new Client();
+			client.initMsgsQueue();
+			clientController = new ClientController(client, this);
 			
 			Thread clientThread = new Thread(client);
 			clientThread.start();
 			
-		}catch(NullPointerException e){
+			Thread clientControlThread = new Thread(clientController);
+			clientControlThread.start();
+			
+		}catch(IOException e){
 			e.printStackTrace();
-			System.exit(1);
 		}
 	}
 	

@@ -17,16 +17,17 @@ import server.Server;
  
 public class Client implements Runnable{
 	
-	private TextArea chat;
-	private JTextField userNameField;
-	private JTextField serverIPField;
-	
+
 	private volatile boolean isConnected = false;
 	private volatile boolean connectQuery = false;
 	private volatile boolean disconnectQuery = false;
 	
+	private volatile boolean isReadyMsgsQueue = false;
 	private volatile PipedInputStream pin;
 	private volatile PipedOutputStream pout;
+	
+	private PrintWriter outMsgsQueue;
+	private BufferedReader inMsgsQueue;
 	
 	private volatile String username;
 	private volatile String serverIP;
@@ -36,45 +37,49 @@ public class Client implements Runnable{
 	private BufferedReader in;
 	private PrintWriter out;
 	
-	public Client(TextArea c, JTextField u, JTextField s) throws NullPointerException{
-		if(c != null)
-			this.chat = c;
-		else
-			throw new NullPointerException();
-		if(u != null)
-			this.userNameField = u;
-		else
-			throw new NullPointerException();
-		if(s != null)
-			this.serverIPField = s;
-		else
-			throw new NullPointerException();
-	}
-	
-	public void connect(){
-		if(!this.isConnected)
+	public boolean connect(){
+		if(!this.isConnected){
 			this.connectQuery = true;
+			return true;
+		}
+		return false;
 	}
 	
-	public void disconnect(){
+	public boolean disconnect(){
 		if(this.isConnected){
 			this.disconnectQuery = true;
-		}else{
-			this.flush("You are not connected to any server");
+			return true;
 		}
+		return false;
 	}
 	
-	public void flush(){
-		this.chat.setText("");
+	public void setClientInfo(String u, String ip){
+		this.username = u;
+		this.serverIP = ip;
 	}
 	
-	public void flush(String s){
-		this.chat.setText(s);
+	public boolean isReady(){
+		return isReadyMsgsQueue;
 	}
 	
-	public void println(String s){
-		this.chat.append(s + "\n");
+	public void initMsgsQueue() throws IOException{
+		PipedInputStream pinMsgs = new PipedInputStream();
+		PipedOutputStream poutMsgs = new PipedOutputStream(pinMsgs);
+		this.outMsgsQueue = new PrintWriter(new BufferedWriter(new OutputStreamWriter(poutMsgs)), true);
+		this.inMsgsQueue = new BufferedReader(new InputStreamReader(pinMsgs));
+		this.isReadyMsgsQueue = true;
 	}
+	
+	public synchronized void addMsgToMsgsQueue(String msg){
+		this.outMsgsQueue.println(msg);
+		this.outMsgsQueue.flush();
+	}
+	
+	public String readMsgQueue() throws IOException{
+		String s = this.inMsgsQueue.readLine();
+		return s;
+	}
+
 	
 	public void sendMsg(String s){	
 		if(this.isConnected){
@@ -92,11 +97,6 @@ public class Client implements Runnable{
 			e.printStackTrace();
 		}
 	}
-
-	public synchronized void getClientInfo() {
-		this.serverIP = serverIPField.getText();
-		this.username = userNameField.getText();
-	}
 	
 	public class ReadMessage implements Runnable{
 		private String s = null;
@@ -113,7 +113,7 @@ public class Client implements Runnable{
 				while(!Thread.currentThread().isInterrupted()){
 					s = in.readLine();
 					if(!s.equals("")){
-							client.println(s);
+							client.addMsgToMsgsQueue(s);
 					}
 				}
 				System.out.println("ReadMsg: interrupted");
@@ -177,11 +177,8 @@ public class Client implements Runnable{
 	@Override
 	public void run(){
 		System.out.println("client thread started");
-		while(!Thread.currentThread().isInterrupted()){ // Пока поток клиента не прерван
-			
+		while(!Thread.currentThread().isInterrupted()){
 			this.isConnected = false;
-			
-			
 			try {
 				Thread.currentThread().sleep(100);
 			} catch (InterruptedException e) {
@@ -189,15 +186,13 @@ public class Client implements Runnable{
 			}
 			
 			if(this.connectQuery){
-				this.flush();
 				this.connectQuery = false;
 				if(this.isConnected){
-					this.println("Client connected");
+					this.addMsgToMsgsQueue("Client connected");
 					System.err.println("Client connected. This can't be.");
 				}else{
 					try {
-						this.getClientInfo();
-						
+					
 						addr = InetAddress.getByName(this.serverIP);
 						socket = new Socket(addr, Server.PORT);
 						
@@ -208,7 +203,7 @@ public class Client implements Runnable{
 						}
 						
 						System.out.println("Socket: " + socket);
-						this.println("Connected to server: "+ socket);
+						this.addMsgToMsgsQueue("Connected to server: "+ socket);
 											
 						this.isConnected = true;
 						
@@ -224,7 +219,7 @@ public class Client implements Runnable{
 						
 						if(!this.isConnected){
 							System.out.println("Unexpected disconnection");
-							this.println("Unexpected disconnection");
+							this.addMsgToMsgsQueue("Unexpected disconnection");
 						}
 						if(this.disconnectQuery){
 							this.disconnectQuery = false;
@@ -240,14 +235,14 @@ public class Client implements Runnable{
 						writeThread.join();
 						
 						System.out.println("Disconnected");
-						this.println("Disconnected");
+						this.addMsgToMsgsQueue("Disconnected");
 						
 					} catch (UnknownHostException e1) {
 						System.err.println("Unknow adress");
-						this.flush("Unknow adress");
+						this.addMsgToMsgsQueue("Unknow adress");
 					} catch(IOException e){
 						System.err.println("Can't connect to server");
-						this.flush("Can't connect to server");
+						this.addMsgToMsgsQueue("Can't connect to server");
 						
 					}finally{
 						if(socket != null)
