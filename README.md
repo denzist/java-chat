@@ -1,19 +1,14 @@
 java-chat
 =========
 
-## Запуск
+The training java-project implements a simple multi-client chat-room with GUI. 
 
-Для запуска сервера Server.jar
+A host can create server in a local network, a client with a unique nickname can connect to the chat-room knowing the host IP adress. Server notifies clients about connections and disconnections of clients. When client connects to room, server replies with last 10 chat messages. It is multi-threading project, every client handled by separated auxiliary server thread. MVC concept is implemented.
 
-Клиент Client.jar
+## Running
 
-Т.е. достаточно скачать только Server.jar и Client.jar
+To host chat-room run Server.jar
 
-Дальше не сложно разобраться
+To connect to any server run  Client.jar
 
-Принцип работы:
-
-Сервер как только к нему стучиться очередной клиент, запускает отдельный поток, в который далее и взаимодействует с клиентом. Этот поток принимает сообщения клиента, прослушивает порт, отсылает полученные сообщения другим клиентам. Если клиент отключается, поток заканчивает свою работу.
-
-Клиент просто стучится к серверу, а потом с ним взаимодейтсвует. Запускаются 2 дополнительных потока, один пишет сообщения, другой читает. По завершению работы или отключения от сервера эти потоки убиваются.
 
