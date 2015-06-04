@@ -1,24 +1,39 @@
 package Controller;
 
-import server.Server;
-import swing.ServerGUI;
+import java.io.IOException;
 
+import server.Server;
 
 public class ServerController implements Runnable {
 	
 	private Server server;
-	private ServerGUI view;
+	private ServerViewInterface view;
 	
 
-	public ServerController(Server server, ServerGUI view){
-		this.server = server;
+	public ServerController(ServerViewInterface view){
 		this.view = view;
+		try{
+			server = new Server();
+			server.initMsgsQueue();
+			Thread serverThread = new Thread(server);
+			serverThread.start();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 	}
 	
 	public void sendStartQuery(){
 		if(server.setOn()){
 			view.flush("");
 			server.setServerInfo(view.getServerInfo());
+		}
+	}
+	
+	public void appendToChat(){
+		try {
+			view.appendToChat(server.readMsgQueue());
+		} catch (IOException e) {
+			//e.printStackTrace();
 		}
 	}
 	
@@ -31,10 +46,9 @@ public class ServerController implements Runnable {
 	public void run(){
 		while(!Thread.currentThread().isInterrupted()){
 			if(server.isReady()){
-				view.showMsg();
+				appendToChat();
 			}
 		}
-		
 	}
 
 }

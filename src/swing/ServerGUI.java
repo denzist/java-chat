@@ -3,48 +3,41 @@ package swing;
 
 import java.awt.Dimension;
 import java.awt.EventQueue;
-
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JTextField;
-
 import java.awt.TextArea;
 import java.awt.event.ActionListener;
 import java.awt.event.ActionEvent;
-import java.io.IOException;
-
 import javax.swing.JLabel;
-
-import server.Server;
 import Controller.ServerController;
+import Controller.ServerViewInterface;
 
 
 
-public class ServerGUI {
+public class ServerGUI implements ServerViewInterface{
 	
 	
 	private ServerController serverController;
-	private Server server;
 	public JFrame frame;
 	private static JTextField serverIPField;
 	private static TextArea chat;
 	public JButton btnConnect;
 	public JButton btnDisconnect;
 
+	@Override
 	public String getServerInfo(){
 		return serverIPField.getText();
 	}
 	
+	@Override
 	public void flush(String s){
 		chat.setText(s);
 	}
 	
-	public void showMsg(){
-		try {
-			chat.append(server.readMsgQueue() + "\n");
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
+	@Override
+	public void appendToChat(String msg){
+		chat.append(msg + "\n");
 	}
 
 	public static void main(String[] args) {
@@ -100,21 +93,12 @@ public class ServerGUI {
 		btnDisconnect.addActionListener(disconnect);
 		
 		frame.pack();
-        frame.setVisible(true);   
-        try{
-			server = new Server();
-			server.initMsgsQueue();
-			serverController = new ServerController(server, this);
-			
-			Thread serverThread = new Thread(server);
-			serverThread.start();
-			
-			Thread serverControlThread = new Thread(serverController);
-			serverControlThread.start();
-			
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
+        frame.setVisible(true);
+        
+        serverController = new ServerController(this);
+        Thread serverControlThread = new Thread(serverController);
+		serverControlThread.start();
+        
 	}
 
 	public class DisconnectEvent implements ActionListener{

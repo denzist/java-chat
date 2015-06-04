@@ -13,19 +13,16 @@ import java.awt.event.ActionListener;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
-import java.io.IOException;
 
 import javax.swing.JLabel;
 
 import Controller.ClientController;
-import client.Client;
+import Controller.ClientViewInterface;
 
 
-public class ClientGUI {
+public class ClientGUI implements ClientViewInterface{
 	
 	private ClientController clientController;
-	private Client client;
-	
 
 	private JFrame frame;
 	private JTextField messageField;
@@ -34,9 +31,6 @@ public class ClientGUI {
 	private TextArea chat;
 	private JButton btnConnect;
 	private JButton btnDisconnect;
-	
-
-
 	
 	public static void main(String[] args) {
 		EventQueue.invokeLater(new Runnable() {
@@ -51,26 +45,26 @@ public class ClientGUI {
 		});
 	}
 	
-	public void showMsg(){
-		try {
-			chat.append(client.readMsgQueue() + "\n");
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
+	@Override
+	public void appendToChat(String msg){
+		chat.append(msg + "\n");
 	}
 	
 	public ClientGUI(){
 		init();
 	}
 	
+	@Override
 	public void flush(String s){
 		chat.setText(s);
 	}
 
+	@Override
 	public String getClientUserName(){
 		return userNameField.getText();
 	}
 	
+	@Override
 	public String getClientServerIP(){
 		return serverIPField.getText();
 	}
@@ -138,20 +132,11 @@ public class ClientGUI {
 		
 		frame.pack();
         frame.setVisible(true);   
-        try{
-        	client = new Client();
-			client.initMsgsQueue();
-			clientController = new ClientController(client, this);
-			
-			Thread clientThread = new Thread(client);
-			clientThread.start();
-			
-			Thread clientControlThread = new Thread(clientController);
-			clientControlThread.start();
-			
-		}catch(IOException e){
-			e.printStackTrace();
-		}
+        
+        clientController = new ClientController(this);
+				
+		Thread clientControlThread = new Thread(clientController);
+		clientControlThread.start();
 	}
 	
 	public class messageEvent implements KeyListener {

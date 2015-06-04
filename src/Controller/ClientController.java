@@ -1,16 +1,25 @@
 package Controller;
 
-import swing.ClientGUI;
+import java.io.IOException;
+
+import Controller.ClientViewInterface;
 import client.Client;
 
 public class ClientController implements Runnable{
 	
 	private Client client;
-	private ClientGUI view;
+	private ClientViewInterface view;
 	
-	public ClientController(Client client, ClientGUI view){
-		this.client = client;
+	public ClientController(ClientViewInterface view){
 		this.view = view;
+		try{
+        	client = new Client();
+			client.initMsgsQueue();
+			Thread clientThread = new Thread(client);
+			clientThread.start();
+		}catch(IOException e){
+			e.printStackTrace();
+		}
 	}
 	
 	public void sendConnectQuery(){
@@ -30,14 +39,21 @@ public class ClientController implements Runnable{
 		client.sendMsg(s);
 	}
 	
+	public void appendToChat(){
+		try {
+			view.appendToChat(client.readMsgQueue());
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+	
 	@Override
 	public void run(){
 		while(!Thread.currentThread().isInterrupted()){
 			if(client.isReady()){
-				view.showMsg();
+				appendToChat();
 			}
 		}
-		
 	}
 
 }

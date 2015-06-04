@@ -6,9 +6,6 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketTimeoutException;
 import java.util.Iterator;
-
-
-
  
 public class Server implements Runnable{
 	
@@ -21,7 +18,7 @@ public class Server implements Runnable{
 	private volatile boolean endQuery = false;
 	
 	private volatile boolean isReadyMsgsQueue = false;
-	private PrintWriter outMsgsQueue;
+	public PrintWriter outMsgsQueue;
 	private BufferedReader inMsgsQueue;
 	
 	public volatile String serverIP;
@@ -119,7 +116,6 @@ public class Server implements Runnable{
 								e.printStackTrace();
 							}
 						}
-						System.out.println("asds");
 						clients.clear();
 						
 						if(s != null)

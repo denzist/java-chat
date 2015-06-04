@@ -1,6 +1,5 @@
 package client;
 
-import java.awt.TextArea;
 import java.io.*;
 import java.net.InetAddress;
 import java.net.Socket;
@@ -8,8 +7,6 @@ import java.net.SocketException;
 import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
 import java.util.Date;
-
-import javax.swing.JTextField;
 
 import message.Message;
 import server.Server;
@@ -36,6 +33,10 @@ public class Client implements Runnable{
 	
 	private BufferedReader in;
 	private PrintWriter out;
+	
+	public boolean isConnected(){
+		return isConnected;
+	}
 	
 	public boolean connect(){
 		if(!this.isConnected){
